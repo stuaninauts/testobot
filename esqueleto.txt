@@ -1,0 +1,30 @@
+esqueleto TESTOBOT telegram feito para grupos
+
+
+- comandos:
+/iniciar_pedido                     - cria um pedido dentro da plataforma do bot
+/add_carrinho       $link           - adiciona produto ao usuario (lista sabores caso necessario)
+/cancelar_item      $link           - cancela o item que o CHOLA quer cancelar
+/cancelar_tudo      $nro_pedido     - cancela T0DO o pedido atual (exibe mensagem de confirmacao VOCE É CHOLA?)
+/exibir_carrinho    $nro_pedido     - mostra os itens que estao atualmente no carrinho
+/finalizar          $nro_pedido     - finaliza pedido (pede pix do comprador e gera pix copia e cola gg +2kg de massa magra)
+/lista_caloteiros   $nro_pedido     - num sei implementa mas a ideia é boa
+
+
+
+- esboço do carrinho
+
+PEDIDO TANANAN
+
+nome do fedido
+ITENS:
+  - 1x Uei 1kg Murango
+  - 2x Creatina 250gr
+TOTAL PARCIAL: R$ 69,24
+
+nome do esquisito
+ITENS:
+  - 1x Coqueteleira Preta
+TOTAL PARCIAL: R$ 24,69
+
+TOTAL DO PEDIDO: R$ 93,93
