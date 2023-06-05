@@ -12,6 +12,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.relative_locator import locate_with
 from selenium.webdriver.support.wait import WebDriverWait
 from webdriver_manager.chrome import ChromeDriverManager
+from selenium.webdriver.chrome.options import Options
 
 from pprint import pprint
 import json
@@ -80,18 +81,24 @@ def get_product_details(product, driver, wait) -> dict:
     """ Given a product, returns it's characteristics. """
 
     driver.get(product)
-    nome = wait.until(lambda d: d.find_element(By.CLASS_NAME, 'topoDetalhe-boxRight-nome')).text
-    preco = wait.until(lambda d: d.find_element(By.CLASS_NAME, 'topoDetalhe-boxRight-precoDe').find_element(By.TAG_NAME, 'gs-custom')).get_attribute('innerHTML')
-    hash = wait.until(lambda d: d.find_element(By.ID, 'finalizarCompra')).get_attribute('data-hash')
+    soup = BeautifulSoup(driver.page_source, 'html.parser')
+    nome = soup.find('h1')
+    nome = str(nome.string) if nome else None
+    if not nome:
+        print("produto nao possui nome")
+        return
+    print(nome)
+    preco = str(soup.find('gs-custom', attrs={"data-desconto-boleto-valor":""}).string)
+    hash = soup.find(id='finalizarCompra')
+    hash = None if not hash else hash['data-hash']
     opcoes = {}
-    try:
-        select = wait.until(lambda d: d.find_element(By.TAG_NAME, 'select'))
-        options = select.find_elements(By.TAG_NAME, 'option')
+    options = soup.find('select')
+    options = options.find_all('option') if options else None
+    if options:
         for op in options:
-            opcoes[op.get_attribute('innerHTML')] = op.get_attribute('value')
-    except TimeoutException:
-        print(f"{product} nao possui opcoes...")
-        opcoes = {}
+            opcoes[str(op.string)] = op['value']
+    else:
+        print("produto nao possui opcoes")
 
     return {
         "nome": nome,
@@ -111,8 +118,11 @@ def link_to_product(link) -> str:
     return link
 
 
+options = Options()
+options.page_load_strategy = 'eager'
+options.add_argument('--headless=new')
 service = Service(ChromeDriverManager().install())
-driver = webdriver.Chrome(service=service)
+driver = webdriver.Chrome(service=service, options=options)
 wait = WebDriverWait(driver, timeout=10)
 
 # pprint(get_product_details("https://www.gsuplementos.com.br/whey-protein-concentrado-1kg-growth-supplements-p985936", driver, wait))
