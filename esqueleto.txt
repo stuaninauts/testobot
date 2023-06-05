@@ -1,12 +1,29 @@
 esqueleto TESTOBOT telegram feito para grupos
 
 
-- comandos:
+- opcao 1 comandos:
 /iniciar_pedido               - cria um pedido dentro da plataforma do bot
 /add_produto                  - a tratar
-/rm_produto                    - lista opcoes para cancelar
+/rm_produto                   - lista opcoes para cancelar
 /exibir_carrinho              - mostra os itens que estao atualmente no carrinho
 /finalizar_compra             - finaliza pedido
+
+- opcao 2 menu:
+passos 
+
+/menu {
+  iniciar pedido
+  adicionar produto(s)
+  remover produto(s)
+  exibir pedido
+  finalizar compra
+}
+
+  iniciar pedido
+  adicionar produto(s)
+  remover produto(s)
+  exibir pedido
+  finalizar compra
 
 
 
