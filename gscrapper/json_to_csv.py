@@ -19,6 +19,7 @@ for category in db:
         if hash == "00":
             print(f"{product} indisponivel")
             continue
+        # Fix/remove \n character
         nome = db[category][product]["nome"]
         try:
             preco = float(db[category][product]["preco"].split('$')[1].replace(',', '.'))

@@ -1,0 +1,32 @@
+{
+
+    "manifest_version": 3,
+    "name": "TestoBot",
+    "version": "0.0.1",
+
+    "description": "Pedidos crescer",
+
+    "permissions": [
+        "tabs"
+    ],
+
+    "icons": {
+        "96": "slash-square-fill.svg"
+    },
+
+    "content_scripts": [
+        {
+            "matches": ["https://www.gsuplementos.com.br/*"],
+            "js": ["./content.js"],
+            "run_at": "document_start"
+        }
+    ],
+
+    "page_action": {
+        "show_matches": ["https://www.gsuplementos.com.br/*"],
+        "default_icon": "slash-square-fill.svg",
+        "default_title": "TestoBot",
+        "default_popup": "./popup.html"
+    }
+
+}
