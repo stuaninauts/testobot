@@ -20,7 +20,7 @@ for category in db:
             print(f"{product} indisponivel")
             continue
         # Fix/remove \n character
-        nome = db[category][product]["nome"]
+        nome = db[category][product]["nome"].replace("\n", "")
         try:
             preco = float(db[category][product]["preco"].split('$')[1].replace(',', '.'))
         except:
