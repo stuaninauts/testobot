@@ -1,5 +1,3 @@
-import requests
-from xml.etree import ElementTree
 from bs4 import BeautifulSoup
 
 from selenium import webdriver
@@ -14,13 +12,12 @@ from selenium.webdriver.support.wait import WebDriverWait
 from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.chrome.options import Options
 
-from pprint import pprint
 import json
 import re
 
 def get_categorias_txt(file) -> list[str]:
     with open(file, "r") as f:
-        return [link for link in f.readlines()]
+        return [link.strip().strip("\n") for link in f.readlines()]
 
 def filter_categorias(categorias) -> list[str]:
     """ Filter category links. """
@@ -51,7 +48,6 @@ def get_link_produtos(wait) -> list[str]:
     produtos_div = wait.until(lambda d: d.find_elements(By.CLASS_NAME, 'categoriaProdItem'))
     for produto in produtos_div:
         produto_link = produto.find_element(By.TAG_NAME, 'a').get_attribute('href')
-        print(f"\t{produto_link}")
         produtos.append(produto_link)
 
     return produtos
@@ -68,7 +64,6 @@ def get_produtos(categoria, driver, wait) -> list[str]:
         driver.execute_script("arguments[0].scrollIntoView();", proxima_button)
         while "disabled" not in proxima_button.get_attribute('class'):
             next_link = proxima_button.get_attribute('onclick').split('=')[1][1:-1]
-            print(f"\tNova pagina {next_link}")
             driver.get(next_link)
             produtos += get_link_produtos(wait)
             proxima_button = wait.until(lambda d: d.find_element(By.CLASS_NAME, 'proxima'))
@@ -80,25 +75,24 @@ def get_produtos(categoria, driver, wait) -> list[str]:
 def get_product_details(product, driver, wait) -> dict:
     """ Given a product, returns it's characteristics. """
 
+    print(f"\tGetting {product}")
     driver.get(product)
     soup = BeautifulSoup(driver.page_source, 'html.parser')
     nome = soup.find('h1')
     nome = str(nome.string) if nome else None
     if not nome:
-        print("produto nao possui nome")
+        print(f"\t\t[ERRO] Nao possui nome")
         return
-    print(nome)
+    nome = nome.strip().strip('\n')
     preco = str(soup.find('gs-custom', attrs={"data-desconto-boleto-valor":""}).string)
     hash = soup.find(id='finalizarCompra')
-    hash = None if not hash else hash['data-hash']
+    hash = "00" if not hash else hash['data-hash']
     opcoes = {}
     options = soup.find('select')
     options = options.find_all('option') if options else None
     if options:
         for op in options:
             opcoes[str(op.string)] = op['value']
-    else:
-        print("produto nao possui opcoes")
 
     return {
         "nome": nome,
@@ -110,12 +104,12 @@ def get_product_details(product, driver, wait) -> dict:
 def link_to_category(link) -> str:
     """ Transforms a category link into a readable format. """
 
-    return link
+    return link.split('/')[-2]
 
 def link_to_product(link) -> str:
     """ Transforms a product link into a readable format. """
 
-    return link
+    return link.split('/')[-1]
 
 
 options = Options()
@@ -125,8 +119,7 @@ service = Service(ChromeDriverManager().install())
 driver = webdriver.Chrome(service=service, options=options)
 wait = WebDriverWait(driver, timeout=10)
 
-# pprint(get_product_details("https://www.gsuplementos.com.br/whey-protein-concentrado-1kg-growth-supplements-p985936", driver, wait))
-# pprint(get_product_details("https://www.gsuplementos.com.br/creatina-monohidratada-250gr-growth-supplements-p985931", driver, wait))
+
 
 # categorias = get_categorias(driver, wait)
 categorias = get_categorias_txt("categorias")
@@ -141,6 +134,6 @@ for categoria in categorias:
         db[category_name][product_name] = details
 
 # Save to file
-with open("db", "w") as f:
+with open("db.json", "w") as f:
     f.write(json.dumps(db))
 
