@@ -19,7 +19,6 @@ for category in db:
         if hash == "00":
             print(f"{product} indisponivel")
             continue
-        # Fix/remove \n character
         nome = db[category][product]["nome"].replace("\n", "")
         try:
             preco = float(db[category][product]["preco"].split('$')[1].replace(',', '.'))
@@ -30,7 +29,7 @@ for category in db:
             df.loc[len(df.index)] = row
         else:
             for opcao in db[category][product]["opcoes"]:
-                if opcao == "Escolha o Sabor":
+                if db[category][product]["opcoes"][opcao] == "0":
                     continue
                 hash = hash.split('-')
                 hash[1] = db[category][product]["opcoes"][opcao]
