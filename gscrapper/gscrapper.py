@@ -1,19 +1,17 @@
-from bs4 import BeautifulSoup
-
-from selenium import webdriver
-from selenium.common.exceptions import (ElementClickInterceptedException,
-                                        TimeoutException)
-from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.common.by import By
-from selenium.webdriver.common.keys import Keys
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.support.relative_locator import locate_with
-from selenium.webdriver.support.wait import WebDriverWait
-from webdriver_manager.chrome import ChromeDriverManager
-from selenium.webdriver.chrome.options import Options
-
 import json
 import re
+import time
+from multiprocessing import Pool
+
+from bs4 import BeautifulSoup
+from selenium import webdriver
+from selenium.common.exceptions import TimeoutException
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.wait import WebDriverWait
+from webdriver_manager.chrome import ChromeDriverManager
+
 
 def get_categorias_txt(file) -> list[str]:
     with open(file, "r") as f:
@@ -81,12 +79,16 @@ def get_product_details(product, driver, wait) -> dict:
     nome = soup.find('h1')
     nome = str(nome.string) if nome else None
     if not nome:
-        print(f"\t\t[ERRO] Nao possui nome")
-        return
+        print(f"\t\t[ERRO] Nao possui nome {product}")
+        return None
     nome = nome.strip().strip('\n')
-    preco = str(soup.find('gs-custom', attrs={"data-desconto-boleto-valor":""}).string)
+    preco = soup.find('gs-custom', attrs={"data-desconto-boleto-valor":""})
+    if not preco:
+        print(f"\t\t[ERRO] Nao possui preco {product}")
+        return None
+    preco = str(preco.string)
     hash = soup.find(id='finalizarCompra')
-    hash = "00" if not hash else hash['data-hash']
+    hash = None if not hash else hash['data-hash']
     opcoes = {}
     options = soup.find('select')
     options = options.find_all('option') if options else None
@@ -112,28 +114,44 @@ def link_to_product(link) -> str:
     return link.split('/')[-1]
 
 
-options = Options()
-options.page_load_strategy = 'eager'
-options.add_argument('--headless=new')
-service = Service(ChromeDriverManager().install())
-driver = webdriver.Chrome(service=service, options=options)
-wait = WebDriverWait(driver, timeout=10)
+def create_db(packed):
+    categorias = packed[0]
+    service = Service(packed[1])
+    options = Options()
+    options.page_load_strategy = 'eager'
+    options.add_argument('--headless=new')
+    driver = webdriver.Chrome(service=service, options=options)
+    wait = WebDriverWait(driver, timeout=10)
+    db = {}
+    for categoria in categorias:
+        produtos = get_produtos(categoria, driver, wait)
+        category_name = link_to_category(categoria)
+        db[category_name] = {}
+        for produto in produtos:
+            details = get_product_details(produto, driver, wait)
+            product_name = link_to_product(produto)
+            db[category_name][product_name] = details
+    return db
 
 
 
-# categorias = get_categorias(driver, wait)
-categorias = get_categorias_txt("categorias")
-db = {}
-for categoria in categorias:
-    produtos = get_produtos(categoria, driver, wait)
-    category_name = link_to_category(categoria)
-    db[category_name] = {}
-    for produto in produtos:
-        details = get_product_details(produto, driver, wait)
-        product_name = link_to_product(produto)
-        db[category_name][product_name] = details
+if __name__ == '__main__':
 
-# Save to file
-with open("db.json", "w") as f:
-    f.write(json.dumps(db))
+    start = time.time()
+    chrome_driver = ChromeDriverManager().install()
+    categorias = get_categorias_txt("categorias")
 
+    pool = Pool()
+    results = pool.map(create_db, [(categorias[0:2], chrome_driver), (categorias[2:4], chrome_driver), (categorias[4:6], chrome_driver), (categorias[6:], chrome_driver)])
+    pool.close()
+    pool.join()
+
+    db = {}
+    for result in results:
+        db = db | result
+
+    # Save to file
+    with open("db.json", "w") as f:
+        f.write(json.dumps(db))
+
+    print(time.time() - start)

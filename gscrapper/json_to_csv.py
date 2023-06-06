@@ -14,16 +14,20 @@ df['PRECO'] = 0
 for category in db:
     for product in db[category]:
         if not db[category][product]:
+            print(f"[ERRO] Produto inexistente {product}")
             continue
         hash = db[category][product]["hash"]
-        if hash == "00":
-            print(f"{product} indisponivel")
+        if not hash:
+            print(f"[NOTE] Produto indisponivel {product}")
             continue
         nome = db[category][product]["nome"].replace("\n", "")
         try:
             preco = float(db[category][product]["preco"].split('$')[1].replace(',', '.'))
-        except:
+        except IndexError:
             preco = float(db[category][product]["preco"])
+        if preco == 0:
+            print(f"[ERRO] Produto sem preco {product}")
+            continue
         if not db[category][product]["opcoes"]:
             row = [hash, category, nome, '-', preco]
             df.loc[len(df.index)] = row
