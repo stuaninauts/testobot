@@ -13,14 +13,23 @@ class Pedido:
         df_pedidos = df_pedidos.append({})
         self.id = df_pedidos.index.max()
         self.compradores = []
-        self.produtos = []
         
-    def add_produto(produto) -> None:
+    def add_produto(self, produto, comprador_id) -> None:
+        if comprador_id not in self.compradores:
+            comprador = Comprador(comprador_id)
+            self.compradores.append(comprador)
+        
+        comprador.produtos.append(produto)
+
+    def rm_produto(self, produto, comprador) -> None:
+        comprador.produtos.remove(produto)
+        if not comprador.produtos:
+            self.compradores.remove(comprador)
+
+    def print(self) -> None:
         pass
 
-    
-
-    def finalizar_compra() -> None:
+    def finalizar_pedido() -> None:
         pass
 
 class Comprador:
